@@ -22,16 +22,15 @@
             margin-bottom: 30px;
             color: #ff0000;
         }
-        #ticket-counter {
-            font-size: 1.5em;
+        input {
+            padding: 10px;
+            font-size: 1em;
+            width: 300px;
+            border: 1px solid white;
+            border-radius: 5px;
             margin-bottom: 20px;
-            color: #00ff00;
-        }
-        input, button {
-            display: none;
-        }
-        #input-section {
-            display: none;
+            background-color: black;
+            color: white;
         }
         button {
             padding: 12px 24px;
@@ -46,65 +45,151 @@
         button:hover {
             background-color: #cc0000;
         }
-        #no-tickets {
-            font-size: 1.5em;
-            color: #ff0000;
+        #ticket-preview {
+            margin-top: 40px;
             display: none;
+        }
+        canvas {
+            border: 1px solid white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+        a.download-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            color: white;
+            background-color: #ff0000;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        a.download-btn:hover {
+            background-color: #cc0000;
         }
     </style>
 </head>
 <body>
     <h1>Battle of the VocalSynth Divas, Round 2! Get your tickets now!</h1>
     <p>Price: $0</p>
-    <div id="ticket-counter">Tickets left: <span id="tickets-left">5</span></div>
-    <div id="input-section">
-        <input type="text" id="username" placeholder="Enter your name">
+    <input type="text" id="username" placeholder="Enter your name">
+    <br>
+    <button onclick="generateTicket()">Generate Ticket</button>
+
+    <div id="ticket-preview">
+        <h2>Your Ticket:</h2>
+        <canvas id="ticket-canvas"></canvas>
         <br>
-        <button onclick="generateTicket()">Generate Ticket</button>
+        <a id="download-btn" class="download-btn" onclick="downloadTicket()">Download Ticket</a>
     </div>
-    <p id="no-tickets">No more tickets left!</p>
 
     <script>
-        const backendURL = 'https://your-backend-url.up.railway.app';
+        const promoImageUrl = 'https://i.imgur.com/3KzGpDt.png';
+        let fullHdCanvas;
 
-        async function updateUI() {
-            const response = await fetch(`${backendURL}/tickets-left`);
-            const data = await response.json();
-            const ticketsLeft = data.ticketsLeft;
-
-            document.getElementById('tickets-left').textContent = ticketsLeft;
-            if (ticketsLeft > 0) {
-                document.getElementById('input-section').style.display = 'block';
-                document.getElementById('no-tickets').style.display = 'none';
-            } else {
-                document.getElementById('input-section').style.display = 'none';
-                document.getElementById('no-tickets').style.display = 'block';
-            }
-        }
-
-        async function generateTicket() {
+        function generateTicket() {
             const name = document.getElementById('username').value.trim();
             if (!name) {
                 alert('Please enter your name.');
                 return;
             }
 
-            const response = await fetch(`${backendURL}/claim-ticket`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            });
+            const canvas = document.getElementById('ticket-canvas');
+            const ctx = canvas.getContext('2d');
+            const image = new Image();
 
-            const data = await response.json();
-            if (data.success) {
-                alert(`Congrats ${name}, you've claimed your ticket!`);
-                updateUI();
-            } else {
-                alert(data.message);
-            }
+            image.crossOrigin = 'anonymous';
+            image.src = promoImageUrl;
+
+            image.onload = () => {
+                const previewWidth = 400;
+                const previewHeight = 250;
+                const infoHeight = 80;
+
+                canvas.width = previewWidth;
+                canvas.height = previewHeight + infoHeight + 20;
+
+                ctx.drawImage(image, 0, 0, previewWidth, previewHeight);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, previewHeight, previewWidth, 20);
+
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.moveTo(0, previewHeight + 10);
+                ctx.lineTo(previewWidth, previewHeight + 10);
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, previewHeight + 20, previewWidth, infoHeight);
+
+                ctx.font = '18px Montserrat';
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Name: ${name}`, previewWidth / 2, previewHeight + 45);
+                ctx.fillText(`Date: ${new Date().toLocaleDateString()}`, previewWidth / 2, previewHeight + 70);
+
+                document.getElementById('ticket-preview').style.display = 'block';
+
+                fullHdCanvas = document.createElement('canvas');
+                const fullHdCtx = fullHdCanvas.getContext('2d');
+
+                const fullHdWidth = 1920;
+                const fullHdHeight = 1080;
+                const fullHdInfoHeight = 180;
+
+                fullHdCanvas.width = fullHdWidth;
+                fullHdCanvas.height = fullHdHeight + fullHdInfoHeight + 40;
+
+                fullHdCtx.drawImage(image, 0, 0, fullHdWidth, fullHdHeight);
+
+                fullHdCtx.fillStyle = '#ffffff';
+                fullHdCtx.fillRect(0, fullHdHeight, fullHdWidth, 40);
+
+                fullHdCtx.strokeStyle = '#000000';
+                fullHdCtx.lineWidth = 6;
+                fullHdCtx.setLineDash([30, 15]);
+                fullHdCtx.beginPath();
+                fullHdCtx.moveTo(0, fullHdHeight + 20);
+                fullHdCtx.lineTo(fullHdWidth, fullHdHeight + 20);
+                fullHdCtx.stroke();
+
+                fullHdCtx.fillStyle = '#ffffff';
+                fullHdCtx.fillRect(0, fullHdHeight + 40, fullHdWidth, fullHdInfoHeight);
+
+                fullHdCtx.font = '48px Montserrat';
+                fullHdCtx.fillStyle = '#000000';
+                fullHdCtx.textAlign = 'center';
+                fullHdCtx.fillText(`Name: ${name}`, fullHdWidth / 2, fullHdHeight + 100);
+                fullHdCtx.fillText(`Date: ${new Date().toLocaleDateString()}`, fullHdWidth / 2, fullHdHeight + 160);
+
+                document.body.appendChild(fullHdCanvas);
+                fullHdCanvas.style.display = 'none';
+            };
+
+            image.onerror = () => {
+                alert('Failed to load the image due to cross-origin restrictions.');
+            };
         }
 
-        updateUI();
+        function downloadTicket() {
+            if (fullHdCanvas) {
+                const link = document.createElement('a');
+                link.href = fullHdCanvas.toDataURL('image/png');
+                link.download = 'concert_ticket.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('Please generate a ticket first.');
+            }
+        }
     </script>
 </body>
 </html>
+
+
